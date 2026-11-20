@@ -1,3 +1,4 @@
+import { Plus, SlidersHorizontal } from "lucide-react";
 import type { AppState } from "@/types";
 import { cn } from "@/lib/utils";
 import { activeQuota, categoryQuota, sortedCategories } from "@/lib/store";
@@ -23,12 +24,14 @@ export function Sidebar({
   onSelectCategory,
   onAdd,
   onManage,
+  persistence,
 }: {
   state: AppState;
   selectedCategory: string | null;
   onSelectCategory: (id: string | null) => void;
   onAdd: () => void;
   onManage: () => void;
+  persistence: "loading" | "sqlite" | "local";
 }) {
   const quota = activeQuota(state);
   const categories = sortedCategories(state);
@@ -36,7 +39,7 @@ export function Sidebar({
 
   return (
     <ShadSidebar collapsible="icon" className="border-black/[0.06] dark:border-white/[0.08]">
-      <SidebarHeader className="border-b border-black/[0.06] dark:border-white/[0.08]">
+      <SidebarHeader className="px-2 pb-1 pt-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" tooltip="知行 · 人生复利系统" className="hover:bg-transparent">
@@ -55,8 +58,8 @@ export function Sidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.14em] text-[var(--ink-tertiary)]">
+        <SidebarGroup className="pt-3">
+          <SidebarGroupLabel className="h-7 text-[11px] font-semibold tracking-normal text-[var(--ink-tertiary)]">
             复利分类
           </SidebarGroupLabel>
           <SidebarMenu>
@@ -108,20 +111,34 @@ export function Sidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="gap-1.5 border-t border-black/[0.06] dark:border-white/[0.08]">
-        <Button type="button" className="h-8 w-full justify-start rounded-lg text-xs group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0" onClick={onAdd}>
-          <span className="group-data-[collapsible=icon]:hidden">+ 新增复利点</span>
-          <span className="hidden font-mono group-data-[collapsible=icon]:inline">+</span>
+      <SidebarFooter className="gap-1 border-t border-black/[0.06] p-2 dark:border-white/[0.08]">
+        <Button
+          type="button"
+          title="新增复利点"
+          className="h-8 w-full justify-start gap-2 rounded-lg bg-[#1D1D1F] text-xs font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_1px_2px_rgba(0,0,0,0.12)] hover:bg-[#2C2C2E] dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+          onClick={onAdd}
+        >
+          <Plus className="size-3.5" />
+          <span className="group-data-[collapsible=icon]:hidden">新增复利点</span>
         </Button>
         <Button
           type="button"
           variant="ghost"
-          className="h-8 w-full justify-start rounded-lg text-xs text-muted-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+          title="管理复利分类"
+          className="h-8 w-full justify-start gap-2 rounded-lg text-xs text-[var(--ink-secondary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
           onClick={onManage}
         >
+          <SlidersHorizontal className="size-3.5" />
           <span className="group-data-[collapsible=icon]:hidden">管理复利分类</span>
-          <span className="hidden text-[10px] group-data-[collapsible=icon]:inline">类</span>
         </Button>
+        <div
+          title={persistence === "sqlite" ? "数据已保存到 SQLite" : "后端暂不可用，数据暂存在本地；恢复连接后会同步"}
+          aria-label={persistence === "sqlite" ? "数据已连接 SQLite" : "SQLite 不可用，数据暂存在本地"}
+          className="mt-1 flex items-center gap-1.5 px-2 text-[10px] text-[var(--ink-tertiary)] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+        >
+          <span className={cn("size-1.5 shrink-0 rounded-full", persistence === "sqlite" ? "bg-emerald-500/80" : "bg-amber-500/80")} />
+          <span className="group-data-[collapsible=icon]:hidden">{persistence === "sqlite" ? "已同步 SQLite" : "仅本地保存"}</span>
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </ShadSidebar>

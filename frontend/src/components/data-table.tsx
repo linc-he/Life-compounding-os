@@ -18,10 +18,9 @@ import {
   type RowData,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -83,20 +82,24 @@ export function DataTable<T extends RowData>({
   return (
     <div className="space-y-3">
       {filterColumn && (
-        <Input
-          value={filterValue}
-          onChange={(event) => table.getColumn(filterColumn)?.setFilterValue(event.target.value)}
-          placeholder={filterPlaceholder}
-          className="h-8 max-w-xs rounded-lg border-black/[0.08] bg-white/80 text-xs dark:border-white/10 dark:bg-zinc-900/70"
-        />
+        <div className="relative max-w-xs">
+          <Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--ink-tertiary)]" />
+          <input
+            value={filterValue}
+            onChange={(event) => table.getColumn(filterColumn)?.setFilterValue(event.target.value)}
+            placeholder={filterPlaceholder}
+            aria-label={filterPlaceholder}
+            className="mac-field h-8 pl-8 pr-3 text-xs"
+          />
+        </div>
       )}
       <div className="material-card overflow-hidden rounded-2xl">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              <TableRow key={headerGroup.id} className="border-black/[0.05] bg-black/[0.015] hover:bg-black/[0.015] dark:border-white/[0.06] dark:bg-white/[0.02]">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <TableHead key={header.id} className="h-9 px-4 text-[11px] font-medium text-[var(--ink-tertiary)]">
                     {header.isPlaceholder ? null : <table.FlexRender header={header} />}
                   </TableHead>
                 ))}
@@ -108,11 +111,14 @@ export function DataTable<T extends RowData>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className={cn(onRowClick && "cursor-pointer")}
+                  className={cn(
+                    "border-black/[0.05] hover:bg-black/[0.02] dark:border-white/[0.06] dark:hover:bg-white/[0.03]",
+                    onRowClick && "cursor-pointer"
+                  )}
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getAllCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-xs">
+                    <TableCell key={cell.id} className="px-4 py-2.5 text-xs">
                       <table.FlexRender cell={cell} />
                     </TableCell>
                   ))}
@@ -128,16 +134,16 @@ export function DataTable<T extends RowData>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-between px-1">
+        <span className="font-mono text-[10.5px] tabular-nums text-[var(--ink-tertiary)]">
           {table.getFilteredRowModel().rows.length} 行
         </span>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="h-7 text-[11px]"
+            className="h-7 rounded-md px-2.5 text-[11px] text-[var(--ink-secondary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
@@ -145,9 +151,9 @@ export function DataTable<T extends RowData>({
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="h-7 text-[11px]"
+            className="h-7 rounded-md px-2.5 text-[11px] text-[var(--ink-secondary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
@@ -170,14 +176,14 @@ export function SortHeader({
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1 font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
+      className="inline-flex items-center gap-1 font-medium text-[var(--ink-tertiary)] transition-colors hover:text-foreground"
       onClick={(event) => {
         event.stopPropagation();
         column.toggleSorting(sorted === "asc");
       }}
     >
       {label}
-      <ArrowUpDown className="h-3 w-3" />
+      <ArrowUpDown className={cn("h-3 w-3", sorted ? "opacity-100" : "opacity-40")} />
     </button>
   );
 }

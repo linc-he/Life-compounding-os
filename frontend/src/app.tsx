@@ -3,6 +3,7 @@ import { Moon, Search, Sun } from "lucide-react";
 import type { AppState, CompoundingItem } from "@/types";
 import { API } from "@/lib/api";
 import { createEmptyState, hasUserContent, loadState, migrateState, saveState, todayStr } from "@/lib/store";
+import { buildSeedState } from "@/lib/seed";
 import { Sidebar } from "@/components/sidebar";
 import { DirectionAwareTabs } from "@/components/ui/direction-aware-tabs";
 import { HaloBadge } from "@/components/ui/halo-badge";
@@ -13,8 +14,6 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { TodayView, type ReflectionFocus } from "@/views/today";
 import { PanoramaView } from "@/views/panorama";
 import { PrinciplesView } from "@/views/principles";
-
-const SECTIONS = ["今日自省", "复利全景", "原则库与日志"] as const;
 
 export function App() {
   const [state, setStateRaw] = useState<AppState>(() => createEmptyState());
@@ -30,6 +29,8 @@ export function App() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [removeItem, setRemoveItem] = useState<CompoundingItem | null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [toolbarSlot, setToolbarSlot] = useState<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState<"light" | "dark">(() =>
     document.documentElement.classList.contains("dark") ? "dark" : "light"
   );
@@ -117,6 +118,11 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // 切换分段时回到顶部；定位到具体复利点时由 TodayView 自己 scrollIntoView
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [tab]);
+
   const sealedToday = state.checkIns[todayStr()]?.sealed === true;
 
   function openItem(itemId: string) {
@@ -145,6 +151,8 @@ export function App() {
             onDateChange={setDate}
             focus={focus}
             categoryId={selectedCategory}
+            onAdd={() => setAddOpen(true)}
+            onLoadSample={hasUserContent(state) ? undefined : () => setState(buildSeedState())}
           />
         ),
       },
@@ -169,7 +177,14 @@ export function App() {
   );
 
   if (persistenceStatus === "loading") {
-    return <div className="flex h-svh items-center justify-center text-sm text-muted-foreground">正在连接 SQLite 并读取数据…</div>;
+    return (
+      <div className="canvas-ambient flex h-svh items-center justify-center">
+        <div className="flex items-center gap-2 text-[12px] text-[var(--ink-tertiary)]">
+          <span className="size-1.5 animate-pulse rounded-full bg-[var(--ink-tertiary)]" />
+          正在读取数据…
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -183,25 +198,23 @@ export function App() {
         }}
         onAdd={() => setAddOpen(true)}
         onManage={() => setCategoryOpen(true)}
+        persistence={persistenceStatus}
       />
       <SidebarInset className="min-h-0 min-w-0 w-full overflow-hidden bg-transparent">
-        <header className="material-chrome sticky top-0 z-40 flex min-h-14 shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] bg-white/72 px-3 py-2 dark:border-white/[0.08] dark:bg-zinc-900/72 sm:px-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <SidebarTrigger className="shrink-0 text-muted-foreground" />
-            <div className="min-w-0">
-              <div className="truncate text-[11px] tracking-wide text-[var(--ink-tertiary)]">知行 · 人生复利系统</div>
-              <div className="truncate text-sm font-semibold tracking-tight text-foreground">{SECTIONS[tab]}</div>
-            </div>
+        <header className="material-chrome sticky top-0 z-40 flex min-h-[52px] shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-black/[0.06] bg-white/72 px-3 py-2 dark:border-white/[0.08] dark:bg-zinc-900/72 sm:flex-nowrap sm:px-4">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <SidebarTrigger className="shrink-0 text-[var(--ink-secondary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]" />
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div ref={setToolbarSlot} className="order-last flex w-full justify-center sm:order-none sm:w-auto" />
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
             <button
               type="button"
               onClick={() => setCmdOpen(true)}
-              className="flex items-center gap-2 rounded-lg border border-black/[0.06] bg-white/70 px-2 py-1.5 text-[11px] text-[var(--ink-secondary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] hover:text-foreground dark:border-white/[0.08] dark:bg-zinc-900/70"
+              aria-label="搜索"
+              className="flex h-7 items-center gap-2 rounded-lg px-2 text-[12px] text-[var(--ink-secondary)] transition-colors hover:bg-black/[0.04] hover:text-foreground dark:hover:bg-white/[0.06]"
             >
               <Search className="size-3.5" />
-              <span className="hidden sm:inline">搜索</span>
-              <kbd className="hidden rounded-md border border-black/[0.06] bg-black/[0.03] px-1 font-mono text-[10px] sm:inline dark:border-white/10 dark:bg-white/5">
+              <kbd className="hidden rounded-[5px] border border-black/[0.06] bg-black/[0.03] px-1 font-mono text-[10px] text-[var(--ink-tertiary)] md:inline dark:border-white/10 dark:bg-white/5">
                 ⌘K
               </kbd>
             </button>
@@ -210,18 +223,10 @@ export function App() {
               aria-pressed={theme === "dark"}
               aria-label={theme === "dark" ? "切换到浅色" : "切换到深色"}
               onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-              className="flex size-8 items-center justify-center rounded-lg border border-black/[0.06] bg-white/70 text-[var(--ink-secondary)] hover:text-foreground dark:border-white/[0.08] dark:bg-zinc-900/70"
+              className="flex size-7 items-center justify-center rounded-lg text-[var(--ink-secondary)] transition-colors hover:bg-black/[0.04] hover:text-foreground dark:hover:bg-white/[0.06]"
             >
               {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
             </button>
-            <span
-              aria-label={persistenceStatus === "sqlite" ? "数据已连接 SQLite" : "SQLite 不可用，数据暂存在本地"}
-              title={persistenceStatus === "sqlite" ? "数据已保存到 SQLite" : "后端暂不可用，数据暂存在本地；恢复连接后会同步"}
-              className="flex h-7 items-center gap-1.5 rounded-full border border-black/[0.06] px-2 text-[10px] text-[var(--ink-tertiary)] dark:border-white/[0.08]"
-            >
-              <span className={`size-1.5 rounded-full ${persistenceStatus === "sqlite" ? "bg-emerald-500" : "bg-amber-500"}`} />
-              <span className="hidden sm:inline">{persistenceStatus === "sqlite" ? "SQLite" : "仅本地"}</span>
-            </span>
             <HaloBadge
               variant="outline"
               live={sealedToday}
@@ -233,19 +238,19 @@ export function App() {
               className={
                 sealedToday
                   ? "h-7 gap-1.5 rounded-full border border-emerald-600/20 bg-emerald-500/[0.08] px-2.5 text-[11px] font-medium text-emerald-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-xl dark:text-emerald-200"
-                  : "h-7 rounded-full border border-black/[0.06] bg-white/72 px-2.5 text-[11px] font-medium text-[var(--ink-tertiary)] shadow-none backdrop-blur-xl dark:border-white/[0.08] dark:bg-zinc-900/72"
+                  : "h-7 rounded-full border border-black/[0.06] bg-transparent px-2.5 text-[11px] font-medium text-[var(--ink-tertiary)] shadow-none dark:border-white/[0.08]"
               }
             >
               {sealedToday ? "今日已封存" : "今日未封存"}
             </HaloBadge>
           </div>
         </header>
-        <div className="min-h-0 min-w-0 w-full flex-1 overflow-x-hidden overflow-y-auto">
+        <div ref={scrollRef} className="min-h-0 min-w-0 w-full flex-1 overflow-x-hidden overflow-y-auto">
           <DirectionAwareTabs
             tabs={tabs}
             activeId={tab}
             onChange={setTab}
-            className="mx-auto mt-4 w-fit max-w-full"
+            barContainer={toolbarSlot}
           />
         </div>
       </SidebarInset>

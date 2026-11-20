@@ -37,7 +37,7 @@ const TextureCard = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn("material-card rounded-2xl text-card-foreground", className)}
+      className={cn("material-texture rounded-2xl text-card-foreground", className)}
       {...props}
     >
       {children}

@@ -337,10 +337,11 @@ function FamilyDrawerClose({
     <button
       data-vaul-no-drag=""
       className={cn(
-        "bg-muted text-muted-foreground focus-visible:shadow-focus-ring-button absolute top-7 right-8 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-transform focus:scale-95 active:scale-75",
+        "absolute right-5 top-5 z-10 flex size-7 cursor-pointer items-center justify-center rounded-full bg-black/[0.05] text-[var(--ink-secondary)] outline-none transition-colors hover:bg-black/[0.08] hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#007AFF]/30 dark:bg-white/[0.08] dark:hover:bg-white/[0.12]",
         className
       )}
       type="button"
+      aria-label="关闭"
     >
       {children || <CloseIcon />}
     </button>
@@ -534,24 +535,24 @@ function FamilyDrawerViewContent(
 function CloseIcon() {
   return (
     <svg
-      width="12"
-      height="12"
+      width="10"
+      height="10"
       viewBox="0 0 12 12"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
     >
-      <title>Close Icon</title>
       <path
         d="M10.4854 1.99998L2.00007 10.4853"
-        stroke="#999999"
-        strokeWidth="3"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M10.4854 10.4844L2.00007 1.99908"
-        stroke="#999999"
-        strokeWidth="3"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

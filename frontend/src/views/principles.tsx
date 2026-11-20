@@ -116,30 +116,32 @@ export function PrinciplesView({
   );
 
   const cats = sortedCategories(state, true);
+  const activeItems = state.items.filter((item) => item.status === "active");
 
   return (
-    <div className="w-full min-w-0 space-y-8 px-4 py-5 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full min-w-0 max-w-[1080px] space-y-10 px-4 pb-12 pt-6 sm:px-6 lg:px-10">
       <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h3 className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ink-tertiary)]">活跃复利点</h3>
-          <span className="text-[11px] text-muted-foreground">移出需两步：毕业归档或原则修正</span>
-        </div>
-        <div className="space-y-2">
-          {state.items.filter((item) => item.status === "active").map((item) => {
+        <Heading title="活跃复利点" hint="移出需两步：毕业归档或原则修正" />
+        <div className="material-card divide-y divide-black/[0.05] overflow-hidden rounded-2xl dark:divide-white/[0.06]">
+          {activeItems.length === 0 && (
+            <div className="px-4 py-8 text-center text-[12px] text-[var(--ink-tertiary)]">暂无活跃复利点</div>
+          )}
+          {activeItems.map((item) => {
             const cat = cats.find((c) => c.id === item.categoryId);
             return (
-              <div key={item.id} className="material-card flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 sm:px-4">
-                <div className="flex min-w-0 items-center gap-2">
+              <div key={item.id} className="group flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-black/[0.015] dark:hover:bg-white/[0.02]">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <ColorDot token={cat?.colorToken} name={cat?.name} />
                   <span className="truncate text-[13px] font-medium text-foreground">{item.title}</span>
-                  <span className="hidden truncate font-mono text-[10px] text-[var(--ink-tertiary)] sm:inline">
-                    {cat?.name ?? "未归类"} · w{item.weight}
+                  <span className="hidden truncate text-[11px] text-[var(--ink-tertiary)] sm:inline">
+                    {cat?.name ?? "未归类"}
                   </span>
+                  <span className="hidden font-mono text-[10px] tabular-nums text-[var(--ink-tertiary)] sm:inline">×{item.weight}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => onRequestRemove(item)}
-                  className="shrink-0 rounded-lg border border-black/[0.08] px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground dark:border-white/10"
+                  className="shrink-0 rounded-md px-2 py-1 text-[11px] text-[var(--ink-tertiary)] transition-colors hover:bg-black/[0.04] hover:text-foreground dark:hover:bg-white/[0.06]"
                 >
                   移出…
                 </button>
@@ -150,7 +152,7 @@ export function PrinciplesView({
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ink-tertiary)]">历史封存日记</h3>
+        <Heading title="历史封存日记" hint="点击任意一行回到当日" />
         <DataTable
           data={diaries}
           columns={diaryColumns}
@@ -162,7 +164,7 @@ export function PrinciplesView({
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ink-tertiary)]">原则与分类变更日志</h3>
+        <Heading title="原则与分类变更日志" hint="新增、毕业、中止与分类调整都会留痕" />
         <DataTable
           data={logs}
           columns={logColumns}
@@ -173,8 +175,8 @@ export function PrinciplesView({
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ink-tertiary)]">全部复利点档案</h3>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <Heading title="全部复利点档案" hint="含已毕业与已中止的历史条目" />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {state.items.map((item) => {
             const cat = cats.find((c) => c.id === item.categoryId);
             const tone = colorStyle(cat?.colorToken, cat?.name);
@@ -182,24 +184,23 @@ export function PrinciplesView({
               <article
                 key={item.id}
                 id={`archive-${item.id}`}
-                className="material-card rounded-2xl p-4"
+                className={cn("material-card rounded-2xl p-4", item.status !== "active" && "opacity-80")}
               >
                 <div className="mb-2 flex items-start justify-between gap-2">
-                  <span className="text-sm font-medium tracking-tight text-foreground">{item.title}</span>
+                  <span className="text-[13.5px] font-medium tracking-tight text-foreground">{item.title}</span>
                   <StatusBadge status={item.status} />
                 </div>
                 <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] text-[var(--ink-tertiary)]">
-                  <ColorDot token={cat?.colorToken} name={cat?.name} />
                   <span className={cn("rounded-md px-1.5 py-0.5 font-sans text-[10px] font-medium", tone.badge)}>
                     {cat?.name ?? "未归类"}
                   </span>
-                  <span className="tabular-nums">w{item.weight}</span>
+                  <span className="tabular-nums">×{item.weight}</span>
                 </div>
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                <p className="line-clamp-2 text-[11.5px] leading-relaxed text-[var(--ink-secondary)]">
                   <span className="text-[var(--ink-tertiary)]">知 · </span>
                   {item.knowledge}
                 </p>
-                <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+                <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-relaxed text-[var(--ink-secondary)]">
                   <span className="text-[var(--ink-tertiary)]">行 · </span>
                   {item.action}
                 </p>
@@ -212,6 +213,15 @@ export function PrinciplesView({
   );
 }
 
+function Heading({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-1">
+      <h3 className="text-[13px] font-semibold tracking-tight text-foreground">{title}</h3>
+      {hint && <span className="text-[11.5px] text-[var(--ink-tertiary)]">{hint}</span>}
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: CompoundingItem["status"] }) {
   const label = status === "active" ? "活跃" : status === "graduated" ? "已内化毕业" : "原则修正中止";
   return (
@@ -220,7 +230,7 @@ function StatusBadge({ status }: { status: CompoundingItem["status"] }) {
         "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium",
         status === "graduated" && "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
         status === "retired" && "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300",
-        status === "active" && "bg-[#007AFF]/10 text-[#0A4D99] dark:text-[#8ECAFF]"
+        status === "active" && "border border-black/[0.08] text-[var(--ink-secondary)] dark:border-white/10"
       )}
     >
       {label}

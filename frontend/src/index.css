@@ -48,6 +48,13 @@
   --sidebar-accent-foreground: 240 4% 12%;
   --sidebar-border: 240 6% 90%;
   --sidebar-ring: 211 100% 50%;
+  /* 90 天热力图：冷灰底 → 低饱和翡翠绿 */
+  --heat-0: #e8e8ed;
+  --heat-1: #d5e3dc;
+  --heat-2: #a9cbbb;
+  --heat-3: #5c9e86;
+  --heat-4: #2f7a62;
+  --hairline: rgba(0, 0, 0, 0.06);
   color-scheme: light;
 }
 
@@ -85,6 +92,12 @@
   --sidebar-accent-foreground: 0 0% 96%;
   --sidebar-border: 240 4% 16%;
   --sidebar-ring: 211 100% 62%;
+  --heat-0: rgba(255, 255, 255, 0.06);
+  --heat-1: #1d3a30;
+  --heat-2: #24533f;
+  --heat-3: #2f7a62;
+  --heat-4: #4fb38f;
+  --hairline: rgba(255, 255, 255, 0.08);
   color-scheme: dark;
 }
 
@@ -170,8 +183,65 @@
       0 1px 2px rgba(0, 0, 0, 0.28),
       0 12px 28px -8px rgba(0, 0, 0, 0.45);
   }
-  .motion-safe-trans {
-    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
+  /* 可交互内容卡：悬停时描边与阴影轻微加深，不位移、不弹跳 */
+  .material-card-interactive {
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  }
+  .material-card-interactive:hover {
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 12px 28px -8px rgba(0, 0, 0, 0.08);
+  }
+  .dark .material-card-interactive:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 14px 32px -8px rgba(0, 0, 0, 0.5);
+  }
+  /* TextureCard：比普通内容卡多一层玻璃内环与顶部微光，用于 KPI 与结账卡 */
+  .material-texture {
+    position: relative;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 252, 0.9) 100%);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+      0 1px 2px rgba(0, 0, 0, 0.03),
+      0 8px 24px -6px rgba(0, 0, 0, 0.05);
+  }
+  .dark .material-texture {
+    background-image: linear-gradient(180deg, rgba(39, 39, 42, 0.9) 0%, rgba(24, 24, 27, 0.88) 100%);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 1px 2px rgba(0, 0, 0, 0.28),
+      0 12px 28px -8px rgba(0, 0, 0, 0.45);
+  }
+  /* macOS 文本框：极淡底、细描边、聚焦钴蓝柔光环 */
+  .mac-field {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background-color: rgba(255, 255, 255, 0.8);
+    color: hsl(var(--foreground));
+    outline: none;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.02);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .mac-field::placeholder {
+    color: var(--ink-tertiary);
+  }
+  .mac-field:focus-visible {
+    border-color: rgba(0, 122, 255, 0.45);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+  }
+  .dark .mac-field {
+    border-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(9, 9, 11, 0.4);
   }
   .warn-glass {
     background-color: rgba(217, 119, 6, 0.07);
@@ -182,22 +252,6 @@
     background-color: rgba(217, 119, 6, 0.12);
     border-color: rgba(217, 119, 6, 0.28);
     color: #f6d7a2;
-  }
-  .hairline-card {
-    background-color: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.85),
-      0 1px 2px rgba(0, 0, 0, 0.03),
-      0 8px 24px -6px rgba(0, 0, 0, 0.05);
-  }
-  .dark .hairline-card {
-    background-color: rgba(24, 24, 27, 0.88);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 1px 2px rgba(0, 0, 0, 0.28),
-      0 12px 28px -8px rgba(0, 0, 0, 0.45);
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

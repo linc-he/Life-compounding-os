@@ -1,4 +1,5 @@
 import { ReactNode, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import { AnimatePresence, motion, MotionConfig } from "motion/react"
 import useMeasure from "react-use-measure"
 
@@ -20,6 +21,11 @@ interface OgImageSectionProps {
   /** Controlled tab id. Omit to let the component own selection. */
   activeId?: number
   onChange?: (id: number) => void
+  /**
+   * Render the segmented control inside another element (e.g. the window toolbar).
+   * `undefined` keeps it inline above the content; `null` means the target is not mounted yet.
+   */
+  barContainer?: HTMLElement | null
 }
 
 function DirectionAwareTabs({
@@ -29,6 +35,7 @@ function DirectionAwareTabs({
   roundedInner,
   activeId,
   onChange,
+  barContainer,
 }: OgImageSectionProps) {
   const [uncontrolledTab, setUncontrolledTab] = useState(tabs[0]?.id ?? 0)
   const activeTab = activeId ?? uncontrolledTab
@@ -69,11 +76,15 @@ function DirectionAwareTabs({
     }),
   }
 
-  return (
-    <div className="flex w-full min-w-0 flex-col">
+  const inToolbar = barContainer !== undefined
+
+  const bar = (
       <div
+        role="tablist"
         className={cn(
-          "material-chrome sticky top-0 z-30 mx-auto flex w-fit max-w-full cursor-pointer space-x-0.5 overflow-x-auto rounded-xl border border-black/[0.06] bg-black/[0.04] p-1 backdrop-blur-2xl dark:border-white/[0.08] dark:bg-white/[0.06]",
+          // macOS segmented control: one recessed trough, one raised white thumb.
+          "mx-auto flex w-fit max-w-full cursor-pointer gap-0.5 overflow-x-auto rounded-[10px] border border-black/[0.05] bg-black/[0.045] p-[3px] shadow-[inset_0_1px_1px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.07]",
+          !inToolbar && "material-chrome sticky top-0 z-30",
           className,
           rounded
         )}
@@ -82,9 +93,11 @@ function DirectionAwareTabs({
           <button
             key={tab.id}
             type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => handleTabClick(tab.id)}
             className={cn(
-              "relative flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-medium tracking-tight transition focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:px-3.5",
+              "relative flex shrink-0 items-center gap-2 rounded-[7px] px-3 py-1 text-[12.5px] font-medium tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:px-4",
               activeTab === tab.id
                 ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground",
@@ -96,8 +109,8 @@ function DirectionAwareTabs({
               <motion.span
                 layoutId="bubble"
                 className={cn(
-                  "absolute inset-0 z-10 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.06),0_1px_1px_rgba(0,0,0,0.04)] dark:bg-zinc-800",
-                  rounded ? roundedInner : "rounded-lg"
+                  "absolute inset-0 z-10 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.04)] dark:bg-zinc-700/90 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
+                  rounded ? roundedInner : "rounded-[7px]"
                 )}
                 transition={{ type: "spring", bounce: 0, duration: 0.28 }}
               />
@@ -107,6 +120,11 @@ function DirectionAwareTabs({
           </button>
         ))}
       </div>
+  )
+
+  return (
+    <div className="flex w-full min-w-0 flex-col">
+      {inToolbar ? (barContainer ? createPortal(bar, barContainer) : null) : bar}
       <MotionConfig transition={{ duration: 0.28, type: "spring", bounce: 0 }}>
         <motion.div
           className={cn(

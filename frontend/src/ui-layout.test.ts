@@ -25,20 +25,34 @@ describe("main column fills the sidebar inset", () => {
   const tabs = read("components/ui/direction-aware-tabs.tsx");
   const app = read("app.tsx");
 
-  it("stretches tab content while the tab bar itself stays centered", () => {
+  it("stretches tab content while the segmented control sits centered in the toolbar", () => {
     expect(tabs).toContain('className="flex w-full min-w-0 flex-col"');
     expect(tabs).toContain("mx-auto flex w-fit max-w-full");
     expect(tabs).toContain('"relative h-full w-full min-w-0"');
-    expect(app).toContain('className="mx-auto mt-4 w-fit max-w-full"');
+    expect(tabs).toContain("createPortal(bar, barContainer)");
+    expect(app).toContain("barContainer={toolbarSlot}");
     expect(app).toContain("min-w-0 w-full flex-1 overflow-x-hidden overflow-y-auto");
-    expect(app).not.toMatch(/DirectionAwareTabs[\s\S]{0,120}max-w-(4|5|6|7)xl/);
+    expect(app).not.toMatch(/DirectionAwareTabs[\s\S]{0,120}max-w-/);
   });
 
-  it("lets every primary view grow with the remaining width", () => {
+  it("lets every primary view grow up to one shared, centered reading width", () => {
     const views = ["views/today.tsx", "views/panorama.tsx", "views/principles.tsx"].map(read);
     for (const source of views) {
-      expect(source).toMatch(/className="w-full min-w-0 space-y-/);
+      expect(source).toMatch(/className="mx-auto w-full min-w-0 max-w-\[1080px\] space-y-/);
       expect(source).not.toMatch(/max-w-(4|5|6|7)xl/);
     }
+  });
+});
+
+describe("dark mode stays legible", () => {
+  it("drives the heatmap from theme tokens instead of light-only hex", () => {
+    const css = read("index.css");
+    const store = read("lib/store.ts");
+    expect(store).toContain('"var(--heat-0)"');
+    expect(css.match(/\.dark\s*\{[^}]+\}/)?.[0] ?? "").toMatch(/--heat-0:/);
+  });
+
+  it("keeps popover success icons theme-aware", () => {
+    expect(read("components/ui/popover-form.tsx")).not.toContain("#09090B");
   });
 });

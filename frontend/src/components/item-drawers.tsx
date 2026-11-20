@@ -3,6 +3,8 @@ import type { AppState, CompoundingItem } from "@/types";
 import { GLOBAL_ACTIVE_LIMIT } from "@/types";
 import { cn } from "@/lib/utils";
 import { activeQuota, categoryQuota, sortedCategories, todayStr, uid } from "@/lib/store";
+import { ColorDot } from "@/components/color-dot";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   FamilyDrawerAnimatedContent,
   FamilyDrawerAnimatedWrapper,
@@ -20,11 +22,10 @@ import {
   type ViewsRegistry,
 } from "@/components/ui/family-drawer";
 
-const inputCls =
-  "w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring";
+const inputCls = "mac-field px-2.5 py-2 text-[12.5px] leading-relaxed";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <div className="mb-1.5 text-[11px] font-medium tracking-wide text-muted-foreground">{children}</div>;
+  return <div className="mb-1.5 text-[11.5px] font-medium text-[var(--ink-secondary)]">{children}</div>;
 }
 
 function DrawerFrame({
@@ -43,8 +44,8 @@ function DrawerFrame({
   return (
     <FamilyDrawerRoot open={open} onOpenChange={onOpenChange} view={view} onViewChange={onViewChange}>
       <FamilyDrawerPortal>
-        <FamilyDrawerOverlay className="bg-zinc-950/40" />
-        <FamilyDrawerContent className="max-w-[520px] rounded-2xl border border-black/[0.06] text-foreground dark:border-white/[0.08]">
+        <FamilyDrawerOverlay className="bg-black/20 backdrop-blur-[2px] dark:bg-black/40" />
+        <FamilyDrawerContent className="max-w-[520px] rounded-2xl border border-black/[0.06] text-foreground shadow-[0_24px_64px_-16px_rgba(0,0,0,0.28)] dark:border-white/[0.08]">
           <FamilyDrawerClose />
           <FamilyDrawerAnimatedWrapper className="max-h-[min(78vh,680px)] overflow-y-auto">
             <FamilyDrawerAnimatedContent>
@@ -121,16 +122,31 @@ function AddStepOne() {
       )}
       <div>
         <FieldLabel>分类</FieldLabel>
-        <select
-          value={form.categoryId}
-          onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-          className={inputCls}
-          data-vaul-no-drag=""
-        >
-          {cats.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="分类" data-vaul-no-drag="">
+          {cats.map((c, index) => {
+            const selected = form.categoryId === c.id;
+            const q = categoryQuota(state, c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setForm({ ...form, categoryId: c.id })}
+                className={cn(
+                  "inline-flex h-8 items-center gap-2 rounded-lg border px-3 text-[12px] transition-colors",
+                  selected
+                    ? "border-black/[0.12] bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:border-white/20 dark:bg-white/[0.1]"
+                    : "border-black/[0.06] text-[var(--ink-secondary)] hover:text-foreground dark:border-white/[0.08]"
+                )}
+              >
+                <ColorDot token={c.colorToken} name={c.name} index={index} />
+                {c.name}
+                <span className="font-mono text-[10px] tabular-nums text-[var(--ink-tertiary)]">{q.count}/{q.limit}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
       <div>
         <FieldLabel>名称</FieldLabel>
@@ -165,21 +181,33 @@ function AddStepOne() {
         />
       </div>
       <div>
-        <FieldLabel>权重 1–3</FieldLabel>
-        <div className="flex gap-2">
-          {[1, 2, 3].map((w) => (
+        <FieldLabel>权重</FieldLabel>
+        <div
+          className="inline-flex gap-0.5 rounded-[9px] border border-black/[0.05] bg-black/[0.045] p-[3px] dark:border-white/[0.06] dark:bg-white/[0.07]"
+          role="radiogroup"
+          aria-label="权重"
+          data-vaul-no-drag=""
+        >
+          {[
+            { w: 1, label: "轻" },
+            { w: 2, label: "中" },
+            { w: 3, label: "重" },
+          ].map(({ w, label }) => (
             <button
               key={w}
               type="button"
+              role="radio"
+              aria-checked={form.weight === w}
               onClick={() => setForm({ ...form, weight: w })}
               className={cn(
-                "rounded-md border px-3 py-1.5 font-mono text-xs",
+                "flex h-7 items-center gap-1.5 rounded-md px-3 text-[12px] transition-colors",
                 form.weight === w
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:border-foreground"
+                  ? "bg-white text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.08)] dark:bg-zinc-700/90"
+                  : "text-[var(--ink-secondary)] hover:text-foreground"
               )}
             >
-              {w}
+              <span className="font-mono tabular-nums">×{w}</span>
+              <span>{label}</span>
             </button>
           ))}
         </div>
@@ -195,29 +223,41 @@ function AddStepOne() {
 }
 
 function AddStepTwo() {
-  const { form, committed, setCommitted, submit } = useAdd();
+  const { state, form, committed, setCommitted, submit } = useAdd();
   const { setView } = useFamilyDrawer();
+  const cats = sortedCategories(state);
+  const catIndex = cats.findIndex((c) => c.id === form.categoryId);
+  const cat = cats[catIndex];
   return (
     <div className="space-y-4 pt-2">
       <FamilyDrawerTitle className="text-base tracking-tight">长期承诺</FamilyDrawerTitle>
       <FamilyDrawerDescription className="text-xs">步骤 2 / 2 · 回显知与行，确认 90 天</FamilyDrawerDescription>
-      <div className="rounded-xl border border-black/[0.06] bg-white/70 p-3 dark:border-white/[0.08] dark:bg-white/[0.04]">
-        <div className="mb-1 text-[10px] font-medium tracking-wider text-[var(--ink-tertiary)]">知 · 底层原则</div>
-        <p className="text-[13px] leading-relaxed text-foreground">{form.knowledge}</p>
+      <div className="material-texture overflow-hidden rounded-xl">
+        <div className="flex items-center gap-2 border-b border-black/[0.05] px-4 py-3 dark:border-white/[0.06]">
+          {cat && <ColorDot token={cat.colorToken} name={cat.name} index={catIndex} />}
+          <span className="truncate text-[13.5px] font-medium tracking-tight text-foreground">{form.title}</span>
+          <span className="ml-auto shrink-0 font-mono text-[10.5px] tabular-nums text-[var(--ink-tertiary)]">
+            {cat?.name} · ×{form.weight}
+          </span>
+        </div>
+        <div className="grid divide-y divide-black/[0.05] dark:divide-white/[0.06]">
+          <div className="px-4 py-3">
+            <div className="mb-1 text-[10.5px] font-medium text-[var(--ink-tertiary)]">知 · 底层原则</div>
+            <p className="text-[13px] leading-relaxed text-foreground">{form.knowledge}</p>
+          </div>
+          <div className="px-4 py-3">
+            <div className="mb-1 text-[10.5px] font-medium text-[var(--ink-tertiary)]">行 · 5 星标准</div>
+            <p className="text-[13px] leading-relaxed text-foreground">{form.action}</p>
+          </div>
+        </div>
       </div>
-      <div className="rounded-xl border border-black/[0.06] bg-white/70 p-3 dark:border-white/[0.08] dark:bg-white/[0.04]">
-        <div className="mb-1 text-[10px] font-medium tracking-wider text-[var(--ink-tertiary)]">行 · 执行标准</div>
-        <p className="text-[13px] leading-relaxed text-foreground">{form.action}</p>
-      </div>
-      <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-3 hover:bg-muted/50">
-        <input
-          type="checkbox"
+      <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-black/[0.06] p-3 transition-colors hover:bg-black/[0.02] dark:border-white/[0.08] dark:hover:bg-white/[0.03]" data-vaul-no-drag="">
+        <Checkbox
           checked={committed}
-          onChange={(e) => setCommitted(e.target.checked)}
-          className="mt-0.5 h-3.5 w-3.5"
-          data-vaul-no-drag=""
+          onCheckedChange={(v) => setCommitted(v === true)}
+          className="mt-0.5"
         />
-        <span className="text-[11px] leading-relaxed text-muted-foreground">
+        <span className="text-[12px] leading-relaxed text-[var(--ink-secondary)]">
           我愿意按此原则持续复利至少
           <span className="font-mono text-foreground"> 90 </span>
           天，不因短期波动中断。
@@ -420,7 +460,9 @@ function RemoveStepTwo() {
         className={inputCls}
         data-vaul-no-drag=""
       />
-      <div className="font-mono text-[10px] text-muted-foreground">{note.trim().length} 字 · 至少 8 字</div>
+      <div className={cn("font-mono text-[10.5px] tabular-nums", note.trim().length >= 8 ? "text-[var(--ink-tertiary)]" : "text-amber-700 dark:text-amber-300")}>
+        {note.trim().length} 字 · 至少 8 字
+      </div>
       <FamilyDrawerButton
         onClick={() => valid && submit()}
         className={cn(

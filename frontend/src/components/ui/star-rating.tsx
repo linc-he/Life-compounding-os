@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -14,11 +15,19 @@ export function StarRating({
   size?: number;
   interactive?: boolean;
 }) {
+  const [hover, setHover] = useState<number | null>(null);
+  // 悬停时预览将要打出的分数，离开后回到真实值
+  const shown = interactive && hover != null ? hover : value;
   return (
-    <div className="flex items-center gap-0.5" role="group" aria-label="五星评分">
+    <div
+      className="-mx-0.5 flex items-center"
+      role="group"
+      aria-label="五星评分"
+      onMouseLeave={() => setHover(null)}
+    >
       {[1, 2, 3, 4, 5].map((n) => {
-        const filled = value != null && value >= n;
-        const high = filled && (value ?? 0) >= 4;
+        const filled = shown != null && shown >= n;
+        const high = filled && (shown ?? 0) >= 4;
         const mid = filled && !high;
         return (
           <button
@@ -27,14 +36,15 @@ export function StarRating({
             aria-label={`${n} 星`}
             aria-pressed={value === n}
             disabled={!interactive}
+            onMouseEnter={() => interactive && setHover(n)}
             onClick={(e) => {
               e.stopPropagation();
               if (!onChange) return;
               onChange(value === n ? null : n);
             }}
             className={cn(
-              "p-0 leading-none",
-              interactive && "cursor-pointer",
+              "rounded-[4px] p-0.5 leading-none outline-none transition-transform duration-100 focus-visible:ring-2 focus-visible:ring-[#007AFF]/30",
+              interactive && "cursor-pointer active:scale-90",
               !interactive && "cursor-default"
             )}
           >
@@ -46,6 +56,7 @@ export function StarRating({
               stroke="currentColor"
               strokeWidth={1.5}
               className={cn(
+                "transition-colors duration-100",
                 high && "fill-emerald-600 text-emerald-600 dark:fill-emerald-400 dark:text-emerald-400",
                 mid && "fill-zinc-400 text-zinc-500",
                 !filled && "fill-none text-zinc-300 dark:text-zinc-600"

@@ -339,7 +339,13 @@ export function scoreGapLabel(system: number | null, subjective: number | null):
 }
 
 /** 冷灰底 → 低饱和翡翠绿。只影响热力图着色，不改变分数。 */
-export const HEAT_SCALE = ["#E8E8ED", "#D5E3DC", "#A9CBBB", "#5C9E86", "#2F7A62"] as const;
+export const HEAT_SCALE = [
+  "var(--heat-0)",
+  "var(--heat-1)",
+  "var(--heat-2)",
+  "var(--heat-3)",
+  "var(--heat-4)",
+] as const;
 
 export function heatColor(score: number | null, sealed: boolean): string {
   if (!sealed || score == null) return HEAT_SCALE[0];
