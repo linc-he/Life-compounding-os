@@ -144,7 +144,7 @@ function IntentGateWizard({ onCreated }: { onCreated: () => void }) {
             提交（进入 24h 冷静期）
           </button>
         )}
-        {err && <span className="text-xs text-red-500">{err}</span>}
+        {err && <span className="text-xs text-zinc-500">{err}</span>}
       </div>
     </WidgetCard>
   );
@@ -244,7 +244,7 @@ function PointRow({ p, onChanged }: { p: Point; onChanged: () => void }) {
           )}
         </div>
       )}
-      {err && <div className="text-xs text-red-500 mt-1">{err}</div>}
+      {err && <div className="text-xs text-zinc-500 mt-1">{err}</div>}
     </WidgetCard>
   );
 }
@@ -285,7 +285,7 @@ export default function PointsPage() {
       </header>
 
       {showWizard && <IntentGateWizard onCreated={() => { setShowWizard(false); load(); }} />}
-      {err && <div className="text-xs text-red-500">{err}</div>}
+      {err && <div className="text-xs text-zinc-500">{err}</div>}
       {points.map((p) => (
         <PointRow key={p.id} p={p} onChanged={load} />
       ))}

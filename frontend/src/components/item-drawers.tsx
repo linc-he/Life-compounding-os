@@ -1,10 +1,244 @@
-import { useEffect, useState } from "react";
-import type { AppState, Category, CompoundingItem } from "@/types";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import type { AppState, CompoundingItem } from "@/types";
+import { GLOBAL_ACTIVE_LIMIT } from "@/types";
 import { cn } from "@/lib/utils";
-import { activeQuota, categoryQuota, uid } from "@/lib/store";
-import { FamilyDrawer, DrawerBlock } from "@/components/cult/family-drawer";
+import { activeQuota, categoryQuota, sortedCategories, todayStr, uid } from "@/lib/store";
+import {
+  FamilyDrawerAnimatedContent,
+  FamilyDrawerAnimatedWrapper,
+  FamilyDrawerButton,
+  FamilyDrawerClose,
+  FamilyDrawerContent,
+  FamilyDrawerDescription,
+  FamilyDrawerOverlay,
+  FamilyDrawerPortal,
+  FamilyDrawerRoot,
+  FamilyDrawerSecondaryButton,
+  FamilyDrawerTitle,
+  FamilyDrawerViewContent,
+  useFamilyDrawer,
+  type ViewsRegistry,
+} from "@/components/ui/family-drawer";
 
-/* ================= 新增复利点：两步冷静流 ================= */
+const inputCls =
+  "w-full rounded-lg border border-input bg-background px-2.5 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring";
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <div className="mb-1.5 text-[11px] font-medium tracking-wide text-muted-foreground">{children}</div>;
+}
+
+function DrawerFrame({
+  open,
+  onOpenChange,
+  view,
+  onViewChange,
+  views,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  view: string;
+  onViewChange: (view: string) => void;
+  views: ViewsRegistry;
+}) {
+  return (
+    <FamilyDrawerRoot open={open} onOpenChange={onOpenChange} view={view} onViewChange={onViewChange}>
+      <FamilyDrawerPortal>
+        <FamilyDrawerOverlay className="bg-zinc-950/40" />
+        <FamilyDrawerContent className="max-w-[520px] rounded-2xl border border-black/[0.06] text-foreground dark:border-white/[0.08]">
+          <FamilyDrawerClose />
+          <FamilyDrawerAnimatedWrapper className="max-h-[min(78vh,680px)] overflow-y-auto">
+            <FamilyDrawerAnimatedContent>
+              <FamilyDrawerViewContent views={views} />
+            </FamilyDrawerAnimatedContent>
+          </FamilyDrawerAnimatedWrapper>
+        </FamilyDrawerContent>
+      </FamilyDrawerPortal>
+    </FamilyDrawerRoot>
+  );
+}
+
+/* ================= 新增：两步，含 90 天承诺与软上限提醒 ================= */
+
+type AddCtx = {
+  state: AppState;
+  form: {
+    categoryId: string;
+    title: string;
+    knowledge: string;
+    action: string;
+    weight: number;
+  };
+  setForm: React.Dispatch<React.SetStateAction<AddCtx["form"]>>;
+  committed: boolean;
+  setCommitted: (v: boolean) => void;
+  submit: () => void;
+};
+
+const AddContext = createContext<AddCtx | null>(null);
+function useAdd() {
+  const ctx = useContext(AddContext);
+  if (!ctx) throw new Error("AddItem context missing");
+  return ctx;
+}
+
+function AddStepOne() {
+  const { state, form, setForm } = useAdd();
+  const { setView } = useFamilyDrawer();
+  const cats = sortedCategories(state);
+  const cat = cats.find((c) => c.id === form.categoryId);
+  const catQuota = cat ? categoryQuota(state, cat.id) : null;
+  const globalQuota = activeQuota(state);
+  const overCategory = Boolean(catQuota && catQuota.count >= catQuota.limit);
+  const overGlobal = globalQuota.count >= GLOBAL_ACTIVE_LIMIT;
+  const step1Valid =
+    form.title.trim().length >= 2 &&
+    form.knowledge.trim().length >= 8 &&
+    form.action.trim().length >= 8 &&
+    Boolean(form.categoryId);
+
+  return (
+    <div className="space-y-4 pt-2">
+      <FamilyDrawerTitle className="text-base tracking-tight">新增复利点</FamilyDrawerTitle>
+      <FamilyDrawerDescription className="text-xs">步骤 1 / 2 · 写下知与行</FamilyDrawerDescription>
+      {(overCategory || overGlobal) && (
+        <div className="warn-glass rounded-lg px-3 py-2 text-[11px] leading-relaxed">
+          复利贵在专注。
+          {overCategory && catQuota && (
+            <span>
+              「{cat?.name}」活跃已达软上限
+              <span className="font-mono font-medium"> {catQuota.count}/{catQuota.limit}</span>
+              。
+            </span>
+          )}
+          {overGlobal && (
+            <span>
+              全局活跃已达
+              <span className="font-mono font-medium"> {globalQuota.count}/{GLOBAL_ACTIVE_LIMIT}</span>
+              ，再增加会稀释每日注意力。
+            </span>
+          )}
+        </div>
+      )}
+      <div>
+        <FieldLabel>分类</FieldLabel>
+        <select
+          value={form.categoryId}
+          onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+          className={inputCls}
+          data-vaul-no-drag=""
+        >
+          {cats.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <FieldLabel>名称</FieldLabel>
+        <input
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          placeholder="如：公众号 AI 日更"
+          className={inputCls}
+          data-vaul-no-drag=""
+        />
+      </div>
+      <div>
+        <FieldLabel>知 · 底层原则</FieldLabel>
+        <textarea
+          rows={2}
+          value={form.knowledge}
+          onChange={(e) => setForm({ ...form, knowledge: e.target.value })}
+          placeholder="为什么长期值得做"
+          className={inputCls}
+          data-vaul-no-drag=""
+        />
+      </div>
+      <div>
+        <FieldLabel>行 · 最小可执行标准</FieldLabel>
+        <textarea
+          rows={2}
+          value={form.action}
+          onChange={(e) => setForm({ ...form, action: e.target.value })}
+          placeholder="什么程度算 5 星"
+          className={inputCls}
+          data-vaul-no-drag=""
+        />
+      </div>
+      <div>
+        <FieldLabel>权重 1–3</FieldLabel>
+        <div className="flex gap-2">
+          {[1, 2, 3].map((w) => (
+            <button
+              key={w}
+              type="button"
+              onClick={() => setForm({ ...form, weight: w })}
+              className={cn(
+                "rounded-md border px-3 py-1.5 font-mono text-xs",
+                form.weight === w
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:border-foreground"
+              )}
+            >
+              {w}
+            </button>
+          ))}
+        </div>
+      </div>
+      <FamilyDrawerButton
+        onClick={() => step1Valid && setView("commit")}
+        className={cn("bg-foreground text-background", !step1Valid && "pointer-events-none opacity-40")}
+      >
+        下一步 · 90 天承诺
+      </FamilyDrawerButton>
+    </div>
+  );
+}
+
+function AddStepTwo() {
+  const { form, committed, setCommitted, submit } = useAdd();
+  const { setView } = useFamilyDrawer();
+  return (
+    <div className="space-y-4 pt-2">
+      <FamilyDrawerTitle className="text-base tracking-tight">长期承诺</FamilyDrawerTitle>
+      <FamilyDrawerDescription className="text-xs">步骤 2 / 2 · 回显知与行，确认 90 天</FamilyDrawerDescription>
+      <div className="rounded-xl border border-black/[0.06] bg-white/70 p-3 dark:border-white/[0.08] dark:bg-white/[0.04]">
+        <div className="mb-1 text-[10px] font-medium tracking-wider text-[var(--ink-tertiary)]">知 · 底层原则</div>
+        <p className="text-[13px] leading-relaxed text-foreground">{form.knowledge}</p>
+      </div>
+      <div className="rounded-xl border border-black/[0.06] bg-white/70 p-3 dark:border-white/[0.08] dark:bg-white/[0.04]">
+        <div className="mb-1 text-[10px] font-medium tracking-wider text-[var(--ink-tertiary)]">行 · 执行标准</div>
+        <p className="text-[13px] leading-relaxed text-foreground">{form.action}</p>
+      </div>
+      <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-3 hover:bg-muted/50">
+        <input
+          type="checkbox"
+          checked={committed}
+          onChange={(e) => setCommitted(e.target.checked)}
+          className="mt-0.5 h-3.5 w-3.5"
+          data-vaul-no-drag=""
+        />
+        <span className="text-[11px] leading-relaxed text-muted-foreground">
+          我愿意按此原则持续复利至少
+          <span className="font-mono text-foreground"> 90 </span>
+          天，不因短期波动中断。
+        </span>
+      </label>
+      <div className="grid gap-2">
+        <FamilyDrawerButton
+          onClick={() => committed && submit()}
+          className={cn("bg-foreground text-background", !committed && "pointer-events-none opacity-40")}
+        >
+          激活这条复利点
+        </FamilyDrawerButton>
+        <FamilyDrawerSecondaryButton onClick={() => setView("default")} className="text-muted-foreground">
+          上一步
+        </FamilyDrawerSecondaryButton>
+      </div>
+    </div>
+  );
+}
+
+const ADD_VIEWS: ViewsRegistry = { default: AddStepOne, commit: AddStepTwo };
 
 export function AddItemDrawer({
   open,
@@ -19,7 +253,8 @@ export function AddItemDrawer({
   setState: (s: AppState) => void;
   defaultCategoryId?: string | null;
 }) {
-  const cats = state.categories.filter((c) => !c.archived);
+  const cats = sortedCategories(state);
+  const [view, setView] = useState("default");
   const [form, setForm] = useState({
     categoryId: defaultCategoryId ?? cats[0]?.id ?? "",
     title: "",
@@ -29,181 +264,180 @@ export function AddItemDrawer({
   });
   const [committed, setCommitted] = useState(false);
 
-  const cat = cats.find((c) => c.id === form.categoryId);
-  const catQuota = cat ? categoryQuota(state, cat.id) : null;
-  const globalQuota = activeQuota(state);
-  const showFriction =
-    (catQuota && catQuota.count >= catQuota.limit) || globalQuota.count >= globalQuota.globalLimit - 2;
-
-  const step1Valid =
-    form.title.trim().length >= 2 &&
-    form.knowledge.trim().length >= 8 &&
-    form.action.trim().length >= 8;
-
-  function submit() {
-    const item: CompoundingItem = {
-      id: uid(),
-      categoryId: form.categoryId,
-      title: form.title.trim(),
-      knowledge: form.knowledge.trim(),
-      action: form.action.trim(),
-      weight: form.weight as 1 | 2 | 3,
-      status: "active",
-      createdAt: new Date().toISOString(),
-    };
-    const log = {
-      id: uid(),
-      type: "created" as const,
-      title: item.title,
-      note: form.knowledge.trim().slice(0, 40),
-      date: new Date().toISOString().slice(0, 10),
-    };
-    setState({
-      ...state,
-      items: [...state.items, item],
-      changeLogs: [log, ...state.changeLogs],
-    });
-    setForm({ categoryId: cats[0]?.id ?? "", title: "", knowledge: "", action: "", weight: 2 });
+  useEffect(() => {
+    if (!open) return;
+    setView("default");
     setCommitted(false);
-    onClose();
-  }
+    setForm({
+      categoryId: defaultCategoryId ?? cats[0]?.id ?? "",
+      title: "",
+      knowledge: "",
+      action: "",
+      weight: 2,
+    });
+  }, [open, defaultCategoryId, cats[0]?.id]);
+
+  const ctx = useMemo<AddCtx>(
+    () => ({
+      state,
+      form,
+      setForm,
+      committed,
+      setCommitted,
+      submit: () => {
+        const item: CompoundingItem = {
+          id: uid(),
+          categoryId: form.categoryId,
+          title: form.title.trim(),
+          knowledge: form.knowledge.trim(),
+          action: form.action.trim(),
+          weight: form.weight as 1 | 2 | 3,
+          status: "active",
+          createdAt: new Date().toISOString(),
+        };
+        setState({
+          ...state,
+          items: [...state.items, item],
+          changeLogs: [
+            {
+              id: uid(),
+              type: "created",
+              title: item.title,
+              note: item.knowledge.slice(0, 40),
+              date: todayStr(),
+            },
+            ...state.changeLogs,
+          ],
+        });
+        onClose();
+      },
+    }),
+    [state, form, committed, setState, onClose]
+  );
 
   return (
-    <FamilyDrawer open={open} onClose={onClose} title="新增复利点">
-      {({ step, next, back }) => (
-        <>
-          {/* 温和的灰底提示条：防贪多 */}
-          {step === 0 && showFriction && (
-            <div className="mb-4 rounded-lg bg-zinc-100/80 px-3 py-2 text-[11px] leading-relaxed text-zinc-600">
-              复利贵在专注，当前已有
-              <span className="font-semibold tnum"> {globalQuota.count} </span>
-              项活跃复利点，新增可能稀释每日注意力。
-            </div>
-          )}
-
-          {step === 0 && (
-            <div className="space-y-4">
-              <div>
-                <FieldLabel>分类</FieldLabel>
-                <select
-                  value={form.categoryId}
-                  onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                  className={inputCls}
-                >
-                  {cats.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <FieldLabel>名称</FieldLabel>
-                <input
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="如：公众号 AI 日更"
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <FieldLabel>知 · 底层原则（为什么长期值得做）</FieldLabel>
-                <textarea
-                  rows={2}
-                  value={form.knowledge}
-                  onChange={(e) => setForm({ ...form, knowledge: e.target.value })}
-                  placeholder="如：输出是最好的输入，倒逼深度理解"
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <FieldLabel>行 · 最小可执行标准（什么程度算 5 星）</FieldLabel>
-                <textarea
-                  rows={2}
-                  value={form.action}
-                  onChange={(e) => setForm({ ...form, action: e.target.value })}
-                  placeholder="如：当天发布 ≥1 篇并附 3 条要点"
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <FieldLabel>权重（对系统加权分的影响）</FieldLabel>
-                <div className="flex gap-2">
-                  {[1, 2, 3].map((w) => (
-                    <button
-                      key={w}
-                      onClick={() => setForm({ ...form, weight: w })}
-                      className={cn(
-                        "rounded-md border px-3 py-1.5 text-xs font-medium tnum motion-safe-trans",
-                        form.weight === w
-                          ? "border-zinc-900 bg-zinc-900 text-zinc-50"
-                          : "border-zinc-200/80 text-zinc-500 hover:border-zinc-400"
-                      )}
-                    >
-                      {w}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <DrawerFooter>
-                <button
-                  disabled={!step1Valid}
-                  onClick={next}
-                  className="rounded-md bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-50 motion-safe-trans hover:bg-zinc-700 disabled:opacity-40"
-                >
-                  下一步 · 长期承诺确认
-                </button>
-              </DrawerFooter>
-            </div>
-          )}
-
-          {/* Step 2：长期承诺确认页 */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <p className="text-[11px] text-zinc-500">
-                确认这条复利点的「知」与「行」——这将写入你的原则库。
-              </p>
-              <DrawerBlock label="知 · 底层原则">
-                <p className="text-xs leading-relaxed text-zinc-900">{form.knowledge}</p>
-              </DrawerBlock>
-              <DrawerBlock label="行 · 最小可执行标准">
-                <p className="text-xs leading-relaxed text-zinc-900">{form.action}</p>
-              </DrawerBlock>
-              <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-zinc-200/80 p-3 motion-safe-trans hover:bg-zinc-50">
-                <input
-                  type="checkbox"
-                  checked={committed}
-                  onChange={(e) => setCommitted(e.target.checked)}
-                  className="mt-0.5 h-3.5 w-3.5 accent-zinc-900"
-                />
-                <span className="text-[11px] leading-relaxed text-zinc-600">
-                  我愿意按此原则持续复利至少
-                  <span className="font-semibold text-zinc-950 tnum"> 90 </span>
-                  天，不因短期波动中断。
-                </span>
-              </label>
-              <DrawerFooter>
-                <button
-                  onClick={back}
-                  className="rounded-md px-3 py-2 text-xs text-zinc-500 hover:bg-zinc-100"
-                >
-                  上一步
-                </button>
-                <button
-                  disabled={!committed}
-                  onClick={submit}
-                  className="rounded-md bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-50 motion-safe-trans hover:bg-zinc-700 disabled:opacity-40"
-                >
-                  激活这条复利点
-                </button>
-              </DrawerFooter>
-            </div>
-          )}
-        </>
-      )}
-    </FamilyDrawer>
+    <AddContext.Provider value={ctx}>
+      <DrawerFrame
+        open={open}
+        onOpenChange={(next) => !next && onClose()}
+        view={view}
+        onViewChange={setView}
+        views={ADD_VIEWS}
+      />
+    </AddContext.Provider>
   );
 }
 
-/* ================= 移除复利点：两步毕业/中止流 ================= */
+/* ================= 移出：毕业 / 中止，禁止一键删除 ================= */
+
+type RemoveCtx = {
+  item: CompoundingItem;
+  choice: "graduated" | "retired" | null;
+  setChoice: (v: "graduated" | "retired") => void;
+  note: string;
+  setNote: (v: string) => void;
+  submit: () => void;
+};
+
+const RemoveContext = createContext<RemoveCtx | null>(null);
+function useRemove() {
+  const ctx = useContext(RemoveContext);
+  if (!ctx) throw new Error("RemoveItem context missing");
+  return ctx;
+}
+
+function RemoveStepOne() {
+  const { item, choice, setChoice } = useRemove();
+  const { setView } = useFamilyDrawer();
+  return (
+    <div className="space-y-3 pt-2">
+      <FamilyDrawerTitle className="text-base tracking-tight">移出 · {item.title}</FamilyDrawerTitle>
+      <FamilyDrawerDescription className="text-xs">
+        步骤 1 / 2 · 禁止一键删除，先选择去向
+      </FamilyDrawerDescription>
+      <button
+        type="button"
+        onClick={() => setChoice("graduated")}
+        className={cn(
+          "w-full rounded-xl border p-4 text-left",
+          choice === "graduated"
+            ? "border-emerald-600/30 bg-emerald-500/[0.07]"
+            : "border-black/[0.06] hover:border-black/15 dark:border-white/10"
+        )}
+      >
+        <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+          <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800 dark:text-emerald-200">毕业</span>
+          已内化为本能 · 毕业归档
+        </div>
+        <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          翡翠绿标签。历史评分全部保留，它已是第二天性。
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={() => setChoice("retired")}
+        className={cn(
+          "w-full rounded-xl border p-4 text-left",
+          choice === "retired"
+            ? "border-zinc-400 bg-zinc-500/[0.08]"
+            : "border-black/[0.06] hover:border-black/15 dark:border-white/10"
+        )}
+      >
+        <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+          <span className="rounded-md bg-zinc-500/10 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:text-zinc-300">中止</span>
+          原则修正 · 主动中止
+        </div>
+        <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          中性灰标签。认知被行动证伪，或标准过大需要拆分。历史记录不删除。
+        </div>
+      </button>
+      <FamilyDrawerButton
+        onClick={() => choice && setView("reason")}
+        className={cn("bg-foreground text-background", !choice && "pointer-events-none opacity-40")}
+      >
+        下一步
+      </FamilyDrawerButton>
+    </div>
+  );
+}
+
+function RemoveStepTwo() {
+  const { choice, note, setNote, submit } = useRemove();
+  const { setView } = useFamilyDrawer();
+  const valid = note.trim().length >= 8 && choice != null;
+  return (
+    <div className="space-y-4 pt-2">
+      <FamilyDrawerTitle className="text-base tracking-tight">
+        {choice === "graduated" ? "毕业复盘" : "中止复盘"}
+      </FamilyDrawerTitle>
+      <FamilyDrawerDescription className="text-xs">步骤 2 / 2 · 必填一句原因，写入原则变更日志</FamilyDrawerDescription>
+      <textarea
+        autoFocus
+        rows={4}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={choice === "graduated" ? "如：已成习惯，连续 60 天无需提醒" : "如：标准过大需拆分，或与另一条原则冲突"}
+        className={inputCls}
+        data-vaul-no-drag=""
+      />
+      <div className="font-mono text-[10px] text-muted-foreground">{note.trim().length} 字 · 至少 8 字</div>
+      <FamilyDrawerButton
+        onClick={() => valid && submit()}
+        className={cn(
+          choice === "graduated" ? "bg-foreground text-background" : "bg-secondary text-secondary-foreground",
+          !valid && "pointer-events-none opacity-40"
+        )}
+      >
+        {choice === "graduated" ? "确认毕业归档" : "确认主动中止"}
+      </FamilyDrawerButton>
+      <FamilyDrawerSecondaryButton onClick={() => setView("default")} className="text-muted-foreground">
+        上一步
+      </FamilyDrawerSecondaryButton>
+    </div>
+  );
+}
+
+const REMOVE_VIEWS: ViewsRegistry = { default: RemoveStepOne, reason: RemoveStepTwo };
 
 export function RemoveItemDrawer({
   open,
@@ -218,153 +452,54 @@ export function RemoveItemDrawer({
   state: AppState;
   setState: (s: AppState) => void;
 }) {
+  const [view, setView] = useState("default");
   const [choice, setChoice] = useState<"graduated" | "retired" | null>(null);
   const [note, setNote] = useState("");
 
-  if (!item) return null;
-
-  const noteValid =
-    note.trim().length >= 8 &&
-    (choice === "graduated"
-      ? true
-      : choice === "retired"
-        ? true
-        : false) && choice != null;
-
-  function submit() {
-    if (!choice) return;
-    const log = {
-      id: uid(),
-      type: choice,
-      title: item.title,
-      note: note.trim(),
-      date: new Date().toISOString().slice(0, 10),
-    };
-    setState({
-      ...state,
-      items: state.items.map((i) =>
-        i.id === item.id ? { ...i, status: choice } : i
-      ),
-      changeLogs: [log, ...state.changeLogs],
-    });
+  useEffect(() => {
+    if (!open) return;
+    setView("default");
     setChoice(null);
     setNote("");
-    onClose();
-  }
+  }, [open, item?.id]);
+
+  if (!item) return null;
+
+  const ctx: RemoveCtx = {
+    item,
+    choice,
+    setChoice,
+    note,
+    setNote,
+    submit: () => {
+      if (!choice) return;
+      setState({
+        ...state,
+        items: state.items.map((row) => (row.id === item.id ? { ...row, status: choice } : row)),
+        changeLogs: [
+          {
+            id: uid(),
+            type: choice,
+            title: item.title,
+            note: note.trim(),
+            date: todayStr(),
+          },
+          ...state.changeLogs,
+        ],
+      });
+      onClose();
+    },
+  };
 
   return (
-    <FamilyDrawer open={open} onClose={onClose} title={`移除 · ${item.title}`}>
-      {({ step, next, back }) => (
-        <>
-          {step === 0 && (
-            <div className="space-y-3">
-              <p className="text-[11px] text-zinc-500">
-                禁止一键静默删除。请二选一，这条复利点的去向将写入原则档案。
-              </p>
-
-              <button
-                onClick={() => setChoice("graduated")}
-                className={cn(
-                  "w-full rounded-lg border p-4 text-left motion-safe-trans",
-                  choice === "graduated"
-                    ? "border-emerald-600 bg-emerald-50/60"
-                    : "border-zinc-200/80 hover:border-zinc-400"
-                )}
-              >
-                <div className="text-xs font-semibold text-zinc-950">
-                  已内化为本能 · 毕业归档
-                </div>
-                <div className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-                  保留全部历史评分，转为绿色毕业档案。它已是你的第二天性。
-                </div>
-              </button>
-
-              <button
-                onClick={() => setChoice("retired")}
-                className={cn(
-                  "w-full rounded-lg border p-4 text-left motion-safe-trans",
-                  choice === "retired"
-                    ? "border-zinc-500 bg-zinc-100"
-                    : "border-zinc-200/80 hover:border-zinc-400"
-                )}
-              >
-                <div className="text-xs font-semibold text-zinc-950">
-                  原则修正 · 中止移除
-                </div>
-                <div className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-                  深灰态档案。认知被行动证伪，或标准过大需拆分。
-                </div>
-              </button>
-
-              <DrawerFooter>
-                <button
-                  disabled={!choice}
-                  onClick={next}
-                  className="rounded-md bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-50 motion-safe-trans hover:bg-zinc-700 disabled:opacity-40"
-                >
-                  下一步
-                </button>
-              </DrawerFooter>
-            </div>
-          )}
-
-          {step === 1 && (
-            <div className="space-y-4">
-              <p className="text-[11px] text-zinc-500">
-                必填一句移出复盘，将记入「原则变更日志」供日后回看。
-              </p>
-              <DrawerBlock label={choice === "graduated" ? "毕业理由" : "中止原因"}>
-                <textarea
-                  autoFocus
-                  rows={3}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder={
-                    choice === "graduated"
-                      ? "如：已成习惯无需再追踪，连续 60 天零提醒"
-                      : "如：标准过大需拆分 / 认知被证伪：与 X 冲突"
-                  }
-                  className={inputCls}
-                />
-              </DrawerBlock>
-              <div className="text-[10px] text-zinc-400 tnum">{note.trim().length}/8 字起</div>
-              <DrawerFooter>
-                <button
-                  onClick={back}
-                  className="rounded-md px-3 py-2 text-xs text-zinc-500 hover:bg-zinc-100"
-                >
-                  上一步
-                </button>
-                <button
-                  disabled={!noteValid}
-                  onClick={submit}
-                  className={cn(
-                    "rounded-md px-4 py-2 text-xs font-medium text-zinc-50 motion-safe-trans disabled:opacity-40",
-                    choice === "graduated" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-zinc-700 hover:bg-zinc-900"
-                  )}
-                >
-                  {choice === "graduated" ? "确认毕业归档" : "确认中止移除"}
-                </button>
-              </DrawerFooter>
-            </div>
-          )}
-        </>
-      )}
-    </FamilyDrawer>
+    <RemoveContext.Provider value={ctx}>
+      <DrawerFrame
+        open={open}
+        onOpenChange={(next) => !next && onClose()}
+        view={view}
+        onViewChange={setView}
+        views={REMOVE_VIEWS}
+      />
+    </RemoveContext.Provider>
   );
-}
-
-/* ---------- 小件 ---------- */
-
-const inputCls =
-  "w-full rounded-md border border-zinc-200/80 bg-zinc-50 px-2.5 py-2 text-xs text-zinc-950 outline-none motion-safe-trans placeholder:text-zinc-400 focus:border-zinc-400";
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-1.5 text-[11px] font-medium text-zinc-500">{children}</div>
-  );
-}
-
-function DrawerFooter({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center justify-end gap-2 pt-1">{children}</div>;
 }

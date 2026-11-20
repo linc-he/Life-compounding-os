@@ -75,7 +75,7 @@ function ScorePicker({
         >
           今天用豁免
         </button>
-        {err && <span className="text-xs text-red-500">{err}</span>}
+        {err && <span className="text-xs text-zinc-500">{err}</span>}
       </div>
     </div>
   );
@@ -130,7 +130,7 @@ export default function TodayPage() {
         </WidgetCard>
       ))}
 
-      {err && <div className="text-xs text-red-500">{err}</div>}
+      {err && <div className="text-xs text-zinc-500">{err}</div>}
       {data && actives.length === 0 && (
         <div className="text-xs text-muted py-8 text-center">
           还没有 active 的复利点。去「复利点」页面通过意图门添加第一个。

@@ -24,19 +24,19 @@ export function WidgetCard({
   return (
     <div
       className={cn(
-        "bg-card rounded-widget shadow-widget p-5 transition-shadow duration-300",
+        "material-card rounded-2xl p-5 transition-shadow duration-300",
         className
       )}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="h-[5px] w-[5px] rounded-full bg-accent" aria-hidden />
-          <span className="text-xs font-medium text-muted tracking-wide uppercase">
+          <span className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
             {label}
           </span>
         </div>
         {pill && (
-          <span className="text-[10px] font-medium text-muted bg-hairline rounded-full px-2 py-0.5">
+          <span className="text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
             {pill}
           </span>
         )}
@@ -65,9 +65,9 @@ export function NumberStat({
     <div className={cn("flex flex-col", className)}>
       <div className="font-sans font-semibold text-3xl leading-none tracking-tight tabular-nums">
         {value}
-        {suffix && <span className="text-base text-muted ml-0.5">{suffix}</span>}
+        {suffix && <span className="text-base text-muted-foreground ml-0.5">{suffix}</span>}
       </div>
-      {hint && <div className="text-xs text-muted mt-1.5">{hint}</div>}
+      {hint && <div className="text-xs text-muted-foreground mt-1.5">{hint}</div>}
     </div>
   );
 }

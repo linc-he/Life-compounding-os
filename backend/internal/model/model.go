@@ -78,6 +78,14 @@ type Review struct {
 	Validated   string `json:"validated,omitempty"`  // 本周验证了什么知
 	Overturned  string `json:"overturned,omitempty"` // 推翻了什么知
 	NextExperiment string `json:"next_experiment,omitempty"` // 下周唯一实验
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+CreatedAt   time.Time `json:"created_at"`
+UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// AppStateSnapshot persists the current React application model as one atomic
+// JSON snapshot. The older normalized API tables remain available separately.
+type AppStateSnapshot struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Payload   string    `gorm:"type:text;not null" json:"payload"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

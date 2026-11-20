@@ -86,7 +86,7 @@ export default function ReviewPage() {
       >
         保存本周复盘
       </button>
-      {err && <div className="text-xs text-red-500">{err}</div>}
+      {err && <div className="text-xs text-zinc-500">{err}</div>}
 
       {reviews.length > 0 && (
         <div className="space-y-3 pt-2">

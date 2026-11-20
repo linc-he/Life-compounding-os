@@ -1,4 +1,6 @@
-// ---------- 类型定义 ----------
+// ---------- 旧版后端 API 类型（保留，不与本地复利模型混用） ----------
+
+import type { AppState } from "@/types";
 
 export interface Category {
   id: number;
@@ -69,12 +71,31 @@ export interface Review {
   next_experiment?: string;
 }
 
-// ---------- API 调用 ----------
+/**
+ * JSON API helper。定义并导出于本文件，避免从 utils 反向导入造成悬空或循环依赖。
+ */
+export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (!headers.has("Content-Type") && init.body != null) {
+    headers.set("Content-Type", "application/json");
+  }
 
-import { api } from "./utils";
+  const response = await fetch(path, { ...init, headers });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || `${response.status} ${response.statusText}`);
+  }
+  if (response.status === 204) return undefined as T;
+  const text = await response.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
+}
 
 export const API = {
-  today: () => api<TodayResponse>("/api/today"),
+	getAppState: () => api<{ state: unknown | null; updated_at?: string }>("/api/app-state"),
+	saveAppState: (state: AppState) =>
+		api<{ ok: boolean }>("/api/app-state", { method: "PUT", body: JSON.stringify({ state }) }),
+	today: () => api<TodayResponse>("/api/today"),
   submitCheck: (body: { point_id: number; score: number; note?: string; use_allowance?: boolean }) =>
     api<DailyCheck>("/api/checks", { method: "POST", body: JSON.stringify(body) }),
   listPoints: (status?: string) =>

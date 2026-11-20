@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,15 @@ import (
 )
 
 func main() {
-	if err := store.Init("./data/life.db"); err != nil {
+	dbPath := os.Getenv("LIFE_DB_PATH")
+	if dbPath == "" {
+		dbPath = "./data/life.db"
+	}
+	port := os.Getenv("LIFE_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	if err := store.Init(dbPath); err != nil {
 		log.Fatalf("init db: %v", err)
 	}
 	if err := store.SeedCategories(); err != nil {
@@ -25,6 +34,8 @@ func main() {
 		// 今日对照
 		api.GET("/today", handler.GetToday)
 		api.POST("/checks", handler.SubmitCheck)
+		api.GET("/app-state", handler.GetAppState)
+		api.PUT("/app-state", handler.PutAppState)
 
 		// 复利点管理（意图门 + 冷却期）
 		api.GET("/points", handler.ListPoints)
@@ -43,8 +54,9 @@ func main() {
 		api.GET("/reviews", handler.ListReviews)
 	}
 
-	log.Println("Life Compounding OS listening on :8080")
-	if err := r.Run(":8080"); err != nil {
+	address := ":" + port
+	log.Printf("Life Compounding OS listening on %s", address)
+	if err := r.Run(address); err != nil {
 		log.Fatal(err)
 	}
 }

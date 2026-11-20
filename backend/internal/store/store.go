@@ -1,13 +1,16 @@
 package store
 
 import (
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
-	"github.com/linc-he/Life-compounding-os/backend/internal/model"
 	"github.com/glebarez/sqlite"
+	"github.com/linc-he/Life-compounding-os/backend/internal/model"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // DB 全局数据库句柄
@@ -28,6 +31,7 @@ func Init(dbPath string) error {
 		&model.DailyCheck{},
 		&model.PointEvent{},
 		&model.Review{},
+		&model.AppStateSnapshot{},
 	); err != nil {
 		return err
 	}
@@ -54,4 +58,26 @@ func SeedCategories() error {
 		}
 	}
 	return nil
+}
+
+// LoadAppState returns the current app state snapshot, if one has been saved.
+func LoadAppState() (*model.AppStateSnapshot, error) {
+	var snapshot model.AppStateSnapshot
+	err := DB.First(&snapshot, 1).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &snapshot, nil
+}
+
+// SaveAppState atomically replaces the single snapshot row (id=1).
+func SaveAppState(payload string) error {
+	snapshot := model.AppStateSnapshot{ID: 1, Payload: payload, UpdatedAt: time.Now().UTC()}
+	return DB.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"payload", "updated_at"}),
+	}).Create(&snapshot).Error
 }

@@ -49,10 +49,13 @@ npm install
 npm run dev             # http://localhost:5173
 ```
 
+当前前端状态会通过 `/api/app-state` 写入 SQLite 的 `app_state_snapshots` 表；浏览器 localStorage 作为离线缓存。数据库为空或只有空白初始状态时，已有浏览器记录会自动迁入；全新安装使用空白状态（不生成示例评分）。数据库默认位置为 `backend/data/life.db`，可通过 `LIFE_DB_PATH` 覆盖；服务端口默认 8080，可通过 `LIFE_PORT` 覆盖。Vite 默认代理到 8080，也可用 `VITE_API_PROXY_TARGET` 指定其他后端地址。
+
 ## API 概览
 
 | 方法 | 路径 | 作用 |
 |---|---|---|
+| GET/PUT | `/api/app-state` | 读取 / 持久化当前前端状态快照（SQLite） |
 | GET | `/api/today` | 今日检查清单（streak、豁免余量、冷却提醒） |
 | POST | `/api/checks` | 提交评分（0–5 分；0 分可选用月豁免） |
 | GET/POST | `/api/points` | 列表 / 提交添加申请（意图四问） |

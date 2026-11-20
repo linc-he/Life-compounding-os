@@ -2,32 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- 黑白灰 + Emerald 主题变量 ---------- */
+/*
+  macOS Vibrancy 语义变量。
+  Light 画布对准 #F5F5F7，正文墨水 #1D1D1F / #6E6E73 / #86868B。
+  Dark 画布对准 #0B0B0D。彩色只出现在微色标、星标、曲线与徽章。
+*/
 :root {
-  --background: #fafafa; /* zinc-50 canvas */
-  --foreground: #09090b; /* zinc-950 */
-  --card: #ffffff;
-  --border: rgba(228, 228, 231, 0.8); /* zinc-200/80，禁重阴影 */
-  --muted: #52525b; /* zinc-600 */
-  --muted-foreground: #a1a1aa; /* zinc-400 */
-  --primary: #18181b; /* zinc-900 */
-  --primary-foreground: #fafafa;
-  --signal: #059669; /* emerald-600：唯一彩色信号 */
-  --signal-soft: #ecfdf5; /* emerald-50 浅底 */
+  --canvas: #f5f5f7;
+  --ink: #1d1d1f;
+  --ink-secondary: #6e6e73;
+  --ink-tertiary: #86868b;
+  --cobalt: #007aff;
+  --amber: #d97706;
+  --emerald: #059669;
+  --indigo: #6366f1;
+  --rose: #e11d48;
+  --graphite: #18181b;
+  --background: 240 11% 96.5%;
+  --foreground: 240 4% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 4% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 4% 12%;
+  --primary: 240 6% 11%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 6% 94%;
+  --secondary-foreground: 240 4% 12%;
+  --muted: 240 6% 94%;
+  --muted-foreground: 240 2% 44%;
+  --accent: 240 6% 93%;
+  --accent-foreground: 240 4% 12%;
+  --destructive: 350 62% 42%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 6% 90%;
+  --input: 240 6% 88%;
+  --ring: 211 100% 50%;
+  --radius: 0.875rem;
+  --chart-1: 240 6% 11%;
+  --chart-2: 211 100% 50%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 240 2% 32%;
+  --sidebar-primary: 240 6% 11%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 6% 94%;
+  --sidebar-accent-foreground: 240 4% 12%;
+  --sidebar-border: 240 6% 90%;
+  --sidebar-ring: 211 100% 50%;
   color-scheme: light;
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #18181b;
-  --border: rgba(63, 63, 70, 0.8); /* zinc-700/80 */
-  --muted: #a1a1aa;
-  --muted-foreground: #71717a;
-  --primary: #fafafa;
-  --primary-foreground: #18181b;
-  --signal: #10b981; /* emerald-500（暗色适配） */
-  --signal-soft: rgba(16, 185, 129, 0.12);
+  --canvas: #0b0b0d;
+  --ink: #f5f5f7;
+  --ink-secondary: #a1a1a6;
+  --ink-tertiary: #86868b;
+  --background: 240 8% 4.7%;
+  --foreground: 240 6% 96%;
+  --card: 240 6% 9%;
+  --card-foreground: 240 6% 96%;
+  --popover: 240 6% 9%;
+  --popover-foreground: 240 6% 96%;
+  --primary: 0 0% 96%;
+  --primary-foreground: 240 6% 8%;
+  --secondary: 240 4% 14%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 240 4% 14%;
+  --muted-foreground: 240 3% 68%;
+  --accent: 240 4% 16%;
+  --accent-foreground: 0 0% 96%;
+  --destructive: 350 55% 72%;
+  --destructive-foreground: 240 8% 8%;
+  --border: 240 4% 16%;
+  --input: 240 4% 18%;
+  --ring: 211 100% 62%;
+  --chart-1: 0 0% 96%;
+  --chart-2: 211 100% 66%;
+  --sidebar-background: 240 6% 7%;
+  --sidebar-foreground: 240 4% 82%;
+  --sidebar-primary: 0 0% 96%;
+  --sidebar-primary-foreground: 240 6% 8%;
+  --sidebar-accent: 240 4% 14%;
+  --sidebar-accent-foreground: 0 0% 96%;
+  --sidebar-border: 240 4% 16%;
+  --sidebar-ring: 211 100% 62%;
   color-scheme: dark;
 }
 
@@ -36,47 +93,121 @@
     font-feature-settings: "tnum" 1;
   }
   body {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC",
-      "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    background-color: var(--canvas);
+    color: hsl(var(--foreground));
+    font-family: "SF Pro Text", "SF Pro Display", Inter, "PingFang SC", "Noto Sans SC",
+      "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  /* 所有分数、日期、天数、配额强制等宽数字 */
+  * {
+    border-color: hsl(var(--border));
+  }
+  input,
+  textarea,
+  select,
+  button {
+    accent-color: var(--cobalt);
+  }
+  input:-webkit-autofill,
+  textarea:-webkit-autofill {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+    caret-color: hsl(var(--foreground));
+  }
+  ::selection {
+    background: rgba(0, 122, 255, 0.18);
+    color: var(--ink);
+  }
   .tnum,
+  .font-mono,
   input[type="date"],
   code,
   kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
   }
 }
 
 @layer utilities {
-  /* HaloBadge 呼吸点（已封存态，短促克制） */
-  .halo-breathe {
-    animation: halo-breathe 2.4s ease-in-out infinite;
+  .canvas-ambient {
+    background-color: var(--canvas);
+    background-image:
+      radial-gradient(980px 520px at -8% -10%, rgba(148, 163, 184, 0.04), transparent 58%),
+      radial-gradient(820px 480px at 108% -12%, rgba(120, 150, 130, 0.035), transparent 54%);
   }
-  @keyframes halo-breathe {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.35); }
-    50% { box-shadow: 0 0 0 4px rgba(5, 150, 105, 0); }
+  .dark .canvas-ambient {
+    background-image:
+      radial-gradient(900px 480px at -10% -8%, rgba(140, 170, 210, 0.04), transparent 56%),
+      radial-gradient(720px 420px at 110% 0%, rgba(110, 150, 140, 0.035), transparent 52%);
   }
-
-  /* 短促克制的过渡：0.18-0.25s */
+  .material-chrome {
+    background-color: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(40px) saturate(1.5);
+    backdrop-filter: blur(40px) saturate(1.5);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  }
+  .dark .material-chrome {
+    background-color: rgba(24, 24, 27, 0.72);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .material-card {
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 1px 2px rgba(0, 0, 0, 0.03),
+      0 8px 24px -6px rgba(0, 0, 0, 0.05);
+  }
+  .dark .material-card {
+    background-color: rgba(24, 24, 27, 0.88);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 1px 2px rgba(0, 0, 0, 0.28),
+      0 12px 28px -8px rgba(0, 0, 0, 0.45);
+  }
   .motion-safe-trans {
-    transition: all 0.18s ease;
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
   }
-
-  /* 尊重 prefers-reduced-motion */
+  .warn-glass {
+    background-color: rgba(217, 119, 6, 0.07);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    color: #78350f;
+  }
+  .dark .warn-glass {
+    background-color: rgba(217, 119, 6, 0.12);
+    border-color: rgba(217, 119, 6, 0.28);
+    color: #f6d7a2;
+  }
+  .hairline-card {
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 1px 2px rgba(0, 0, 0, 0.03),
+      0 8px 24px -6px rgba(0, 0, 0, 0.05);
+  }
+  .dark .hairline-card {
+    background-color: rgba(24, 24, 27, 0.88);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 1px 2px rgba(0, 0, 0, 0.28),
+      0 12px 28px -8px rgba(0, 0, 0, 0.45);
+  }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
-    .halo-breathe {
-      animation: none;
-      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18);
-    }
   }
+}
+
+[data-vaul-drawer] {
+  color: hsl(var(--foreground));
 }
