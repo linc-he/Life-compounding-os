@@ -18,7 +18,7 @@ import {
   type RowData,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -143,21 +143,23 @@ export function DataTable<T extends RowData>({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 rounded-md px-2.5 text-[11px] text-[var(--ink-secondary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+            className="h-7 gap-1 whitespace-nowrap rounded-md px-2.5 text-[11px] text-[var(--ink-secondary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
+            <ChevronLeft className="size-3.5" aria-hidden />
             上一页
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 rounded-md px-2.5 text-[11px] text-[var(--ink-secondary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+            className="h-7 gap-1 whitespace-nowrap rounded-md px-2.5 text-[11px] text-[var(--ink-secondary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
             下一页
+            <ChevronRight className="size-3.5" aria-hidden />
           </Button>
         </div>
       </div>

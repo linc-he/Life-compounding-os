@@ -42,12 +42,12 @@ export function Sidebar({
       <SidebarHeader className="px-2 pb-1 pt-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" tooltip="知行 · 人生复利系统" className="hover:bg-transparent">
+            <SidebarMenuButton size="lg" tooltip="知行合一 人生复利系统" className="hover:bg-transparent">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#1D1D1F] text-[11px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:bg-zinc-100 dark:text-zinc-950">
                 知
               </span>
               <span className="grid flex-1 text-left leading-tight">
-                <span className="truncate text-sm font-semibold tracking-tight text-foreground">知行</span>
+                <span className="truncate text-sm font-semibold tracking-tight text-foreground">知行合一</span>
                 <span className="truncate text-[10px] tracking-wide text-[var(--ink-tertiary)]">
                   Life Compounding
                 </span>

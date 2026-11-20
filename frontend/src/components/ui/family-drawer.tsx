@@ -9,6 +9,7 @@ import {
 import { Slot } from "@radix-ui/react-slot"
 import { AnimatePresence, motion } from "motion/react"
 import useMeasure from "react-use-measure"
+import { X } from "lucide-react"
 import { Drawer } from "vaul"
 
 import { cn } from "@/lib/utils"
@@ -533,31 +534,7 @@ function FamilyDrawerViewContent(
 // ============================================================================
 
 function CloseIcon() {
-  return (
-    <svg
-      width="10"
-      height="10"
-      viewBox="0 0 12 12"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d="M10.4854 1.99998L2.00007 10.4853"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10.4854 10.4844L2.00007 1.99908"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+  return <X className="size-3.5" strokeWidth={2} aria-hidden />
 }
 
 // ============================================================================

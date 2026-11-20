@@ -56,3 +56,22 @@ describe("dark mode stays legible", () => {
     expect(read("components/ui/popover-form.tsx")).not.toContain("#09090B");
   });
 });
+
+describe("category manager dialog fits its actions", () => {
+  const drawer = read("components/category-drawer.tsx");
+
+  it("grows on desktop without exceeding a narrow viewport", () => {
+    expect(drawer).toContain("w-[min(calc(100vw-2rem),44rem)]");
+    expect(drawer).toContain("md:w-[min(calc(100vw-2rem),44rem)]");
+    expect(drawer).not.toContain("max-w-[560px]");
+  });
+
+  it("keeps the create button on one line and uses lucide", () => {
+    expect(drawer).toContain('from "lucide-react"');
+    expect(drawer).toContain("<Plus");
+    expect(drawer).toContain("whitespace-nowrap");
+    expect(drawer).toContain("min-[420px]:w-auto");
+    expect(read("components/ui/family-drawer.tsx")).toContain('from "lucide-react"');
+    expect(read("components/ui/family-drawer.tsx")).toContain("<X");
+  });
+});

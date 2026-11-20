@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { Check, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Check, ChevronDown, ChevronUp, FolderPlus, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import type { AppState, Category, ColorToken } from "@/types";
 import { COLOR_TOKENS } from "@/types";
 import { cn } from "@/lib/utils";
@@ -42,9 +42,9 @@ function ColorChoices({
   onChange: (token: ColorToken) => void;
 }) {
   return (
-    <div className="flex items-center gap-2" data-vaul-no-drag="">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5" data-vaul-no-drag="">
       <span className="w-12 shrink-0 text-[11.5px] text-[var(--ink-secondary)]">微色</span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {COLOR_TOKENS.map((token) => {
           const style = COLOR_TOKEN_STYLES[token];
           const selected = value === token;
@@ -151,16 +151,29 @@ function CategoryHome() {
 
   return (
     <div className="space-y-4 pt-2">
-      <FamilyDrawerTitle className="text-base tracking-tight">管理复利分类</FamilyDrawerTitle>
-      <FamilyDrawerDescription className="text-xs">
-        新建、改名、定位、软上限与排序。删除含复利点的分类必须先迁移。
-      </FamilyDrawerDescription>
+      <div className="flex items-start gap-2.5 pr-8">
+        <span
+          className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-black/[0.04] text-[var(--ink-secondary)] dark:bg-white/[0.06]"
+          aria-hidden
+        >
+          <SlidersHorizontal className="size-3.5" />
+        </span>
+        <div className="min-w-0 space-y-1">
+          <FamilyDrawerTitle className="pr-0 text-base tracking-tight">管理复利分类</FamilyDrawerTitle>
+          <FamilyDrawerDescription className="text-xs">
+            新建、改名、定位、软上限与排序。删除含复利点的分类必须先迁移。
+          </FamilyDrawerDescription>
+        </div>
+      </div>
       {notice && (
         <div className="warn-glass rounded-lg px-3 py-2 text-[11px]">{notice}</div>
       )}
 
       <div className="space-y-2.5 rounded-xl border border-black/[0.06] bg-white/60 p-3.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
-        <div className="text-[12px] font-semibold text-foreground">新建分类</div>
+        <div className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground">
+          <FolderPlus className="size-3.5 shrink-0 text-[var(--ink-secondary)]" aria-hidden />
+          新建分类
+        </div>
         <input
           value={creating.name}
           onChange={(e) => setCreating({ ...creating, name: e.target.value })}
@@ -175,16 +188,18 @@ function CategoryHome() {
           className={inputCls}
           data-vaul-no-drag=""
         />
-        <div className="flex items-center gap-2">
-          <span className="w-12 shrink-0 text-[11.5px] text-[var(--ink-secondary)]">软上限</span>
-          <input
-            type="number"
-            min={1}
-            value={creating.softCap}
-            onChange={(e) => setCreating({ ...creating, softCap: e.target.value })}
-            className={cn(inputCls, "w-20 font-mono tabular-nums")}
-            data-vaul-no-drag=""
-          />
+        <div className="flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="w-12 shrink-0 text-[11.5px] text-[var(--ink-secondary)]">软上限</span>
+            <input
+              type="number"
+              min={1}
+              value={creating.softCap}
+              onChange={(e) => setCreating({ ...creating, softCap: e.target.value })}
+              className={cn(inputCls, "!w-24 shrink-0 font-mono tabular-nums")}
+              data-vaul-no-drag=""
+            />
+          </div>
           <button
             type="button"
             disabled={creating.name.trim().length < 1}
@@ -197,8 +212,9 @@ function CategoryHome() {
               }));
               setCreating({ name: "", description: "", softCap: "5", colorToken: "cobalt" });
             }}
-            className="ml-auto h-8 rounded-lg bg-[#1D1D1F] px-4 text-[12px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-colors hover:bg-[#2C2C2E] disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+            className="inline-flex h-8 w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#1D1D1F] px-3.5 text-[12px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-colors hover:bg-[#2C2C2E] disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white min-[420px]:ml-auto min-[420px]:w-auto"
           >
+            <Plus className="size-3.5 shrink-0" aria-hidden />
             新建
           </button>
         </div>
@@ -279,7 +295,7 @@ function CategoryHome() {
                   value={draft.softCap}
                   onChange={(e) => setDrafts((prev) => ({ ...prev, [category.id]: { ...draft, softCap: e.target.value } }))}
                   onBlur={(e) => commit(category, { softCap: e.target.value })}
-                  className={cn(inputCls, "w-20 font-mono tabular-nums")}
+                  className={cn(inputCls, "!w-24 shrink-0 font-mono tabular-nums")}
                   data-vaul-no-drag=""
                 />
               </label>
@@ -308,10 +324,20 @@ function CategoryMigrate() {
 
   return (
     <div className="space-y-4 pt-2">
-      <FamilyDrawerTitle className="text-base tracking-tight">迁移后删除</FamilyDrawerTitle>
-      <FamilyDrawerDescription className="text-xs">
-        步骤 2 / 2 · 「{source.name}」仍有 {owned.length} 个复利点（含毕业与中止）。选择目标分类后才会删除，评分与历史不会级联清除。
-      </FamilyDrawerDescription>
+      <div className="flex items-start gap-2.5 pr-8">
+        <span
+          className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-black/[0.04] text-[var(--ink-secondary)] dark:bg-white/[0.06]"
+          aria-hidden
+        >
+          <ArrowRightLeft className="size-3.5" />
+        </span>
+        <div className="min-w-0 space-y-1">
+          <FamilyDrawerTitle className="pr-0 text-base tracking-tight">迁移后删除</FamilyDrawerTitle>
+          <FamilyDrawerDescription className="text-xs">
+            步骤 2 / 2 · 「{source.name}」仍有 {owned.length} 个复利点（含毕业与中止）。选择目标分类后才会删除，评分与历史不会级联清除。
+          </FamilyDrawerDescription>
+        </div>
+      </div>
       <div className="space-y-2" role="radiogroup" aria-label="目标迁移分类" data-vaul-no-drag="">
         {targets.map((category) => {
           const selected = targetId === category.id;
@@ -361,6 +387,7 @@ function CategoryMigrate() {
         }}
         className={cn("bg-foreground text-background", !targetId && "pointer-events-none opacity-40")}
       >
+        <ArrowRightLeft className="size-3.5 shrink-0" aria-hidden />
         迁移全部项目并删除
       </FamilyDrawerButton>
       <FamilyDrawerSecondaryButton
@@ -406,9 +433,9 @@ export function CategoryDrawer({
       <FamilyDrawerRoot open={open} onOpenChange={(next) => !next && onClose()} view={view} onViewChange={setView}>
         <FamilyDrawerPortal>
           <FamilyDrawerOverlay className="bg-black/20 backdrop-blur-[2px] dark:bg-black/40" />
-          <FamilyDrawerContent className="max-w-[560px] rounded-2xl border border-black/[0.06] text-foreground shadow-[0_24px_64px_-16px_rgba(0,0,0,0.28)] dark:border-white/[0.08]">
+          <FamilyDrawerContent className="w-[min(calc(100vw-2rem),44rem)] max-w-[min(calc(100vw-2rem),44rem)] rounded-2xl border border-black/[0.06] text-foreground shadow-[0_24px_64px_-16px_rgba(0,0,0,0.28)] dark:border-white/[0.08] md:w-[min(calc(100vw-2rem),44rem)]">
             <FamilyDrawerClose />
-            <FamilyDrawerAnimatedWrapper className="max-h-[min(82vh,760px)] overflow-y-auto">
+            <FamilyDrawerAnimatedWrapper className="max-h-[min(86vh,880px)] overflow-y-auto px-4 sm:px-6">
               <FamilyDrawerAnimatedContent>
                 <FamilyDrawerViewContent views={VIEWS} />
               </FamilyDrawerAnimatedContent>
